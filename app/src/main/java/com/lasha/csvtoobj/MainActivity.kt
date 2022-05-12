@@ -1,36 +1,31 @@
 package com.lasha.csvtoobj
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.database.Cursor
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.provider.OpenableColumns
 import android.util.Log
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.net.toUri
+import androidx.lifecycle.ViewModelProvider
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
-import com.opencsv.CSVReader
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.*
-import java.net.URI
+import java.net.URL
 
 
 class MainActivity : AppCompatActivity() {
 
-    private var fileName = ""
+    private lateinit var viewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setupOnClickListeners()
-
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
     }
     public override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         super.onActivityResult(requestCode, resultCode, resultData)
@@ -44,17 +39,19 @@ class MainActivity : AppCompatActivity() {
 //                    .joinToString(separator = "\n")
 //            }
 //        }
-        when (val result = tryHandleOpenDocumentResult(requestCode, resultCode, resultData)) {
-            OpenFileResult.DifferentResult, OpenFileResult.OpenFileWasCancelled -> { }
-            OpenFileResult.ErrorOpeningFile -> Log.e("File opening:", "error opening file")
-            is OpenFileResult.FileWasOpened -> {
-                Log.i("File", "Opened")
-                val file: File = File()
-                val rows: List<List<String>> = csvReader().readAll(file)
-                Log.i("File", "$file, rows - $rows")
-                showObjectTv.text = result.content.toString()
-            }
-        }
+
+//        when (val result = tryHandleOpenDocumentResult(requestCode, resultCode, resultData)) {
+//            OpenFileResult.DifferentResult, OpenFileResult.OpenFileWasCancelled -> { }
+//            OpenFileResult.ErrorOpeningFile -> Log.e("File opening:", "error opening file")
+//            is OpenFileResult.FileWasOpened -> {
+//                Log.i("File", "Opened")
+//
+//                val file = File(Environment.getDownloadCacheDirectory().toString() + "/" + "roman.csv")
+//                val rows: List<List<String>> = csvReader().readAll(file)
+//                Log.i("File", "$file, rows - $rows, file size - ${file.length()}")
+//                showObjectTv.text = rows.toString()
+//            }
+//        }
     }
 
 
@@ -85,13 +82,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     private fun openFile() {
         if (checkPermissionForReadExtertalStorage()) {
-            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"
-            }
-            startActivityForResult(intent, PICK_CSV_FILE)
+
         }
         else {
             requestPermissionForReadExtertalStorage()
@@ -148,42 +142,42 @@ class MainActivity : AppCompatActivity() {
 //        }
 //        return result
 //    }
-
-    fun tryHandleOpenDocumentResult(requestCode: Int, resultCode: Int, data: Intent?): OpenFileResult {
-        return if (requestCode == PICK_CSV_FILE) {
-            handleOpenDocumentResult(resultCode, data)
-        } else OpenFileResult.DifferentResult
-    }
-
-    private fun handleOpenDocumentResult(resultCode: Int, data: Intent?): OpenFileResult {
-        return if (resultCode == Activity.RESULT_OK && data != null) {
-            val contentUri = data.data
-            if (contentUri != null) {
-                val stream =
-                    try {
-                        this.application.contentResolver.openInputStream(contentUri)
-                    } catch (exception: FileNotFoundException) {
-                        return OpenFileResult.ErrorOpeningFile
-                    }
-
-                val fileName = "not implemented" // will implement file names later
-
-                if (stream != null && fileName != null) {
-                    Log.i("File", "${OpenFileResult.FileWasOpened(fileName, stream)}")
-                    OpenFileResult.FileWasOpened(fileName, stream)
-                } else OpenFileResult.ErrorOpeningFile
-            } else {
-                OpenFileResult.ErrorOpeningFile
-            }
-        } else {
-            OpenFileResult.OpenFileWasCancelled
-        }
-    }
-
-    sealed class OpenFileResult {
-        object OpenFileWasCancelled : OpenFileResult()
-        data class FileWasOpened(val fileName: String, val content: InputStream) : OpenFileResult()
-        object ErrorOpeningFile : OpenFileResult()
-        object DifferentResult : OpenFileResult()
-    }
+//
+//    fun tryHandleOpenDocumentResult(requestCode: Int, resultCode: Int, data: Intent?): OpenFileResult {
+//        return if (requestCode == PICK_CSV_FILE) {
+//            handleOpenDocumentResult(resultCode, data)
+//        } else OpenFileResult.DifferentResult
+//    }
+//
+//    private fun handleOpenDocumentResult(resultCode: Int, data: Intent?): OpenFileResult {
+//        return if (resultCode == Activity.RESULT_OK && data != null) {
+//            val contentUri = data.data
+//            if (contentUri != null) {
+//                val stream =
+//                    try {
+//                        this.application.contentResolver.openInputStream(contentUri)
+//                    } catch (exception: FileNotFoundException) {
+//                        return OpenFileResult.ErrorOpeningFile
+//                    }
+//
+//                val fileName = "not implemented" // will implement file names later
+//
+//                if (stream != null && fileName != null) {
+//                    Log.i("File", "${OpenFileResult.FileWasOpened(fileName, stream)}")
+//                    OpenFileResult.FileWasOpened(fileName, stream)
+//                } else OpenFileResult.ErrorOpeningFile
+//            } else {
+//                OpenFileResult.ErrorOpeningFile
+//            }
+//        } else {
+//            OpenFileResult.OpenFileWasCancelled
+//        }
+//    }
+//
+//    sealed class OpenFileResult {
+//        object OpenFileWasCancelled : OpenFileResult()
+//        data class FileWasOpened(val fileName: String, val content: InputStream) : OpenFileResult()
+//        object ErrorOpeningFile : OpenFileResult()
+//        object DifferentResult : OpenFileResult()
+//    }
 }
