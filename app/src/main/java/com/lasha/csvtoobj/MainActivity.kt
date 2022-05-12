@@ -32,8 +32,8 @@ class MainActivity : AppCompatActivity() {
         channel?.also { channel ->
             receiver = WiFiDirectBroadcastReceiver(manager!!, channel, this)
         }
-        var i = 0
-        WifiP2pManager.PeerListListener { i = it.deviceList.size }
+        var i = ""
+
         Log.i("Devices", i.toString())
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
