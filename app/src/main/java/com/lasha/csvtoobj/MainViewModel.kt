@@ -16,24 +16,24 @@ import java.net.URL
 class MainViewModel: ViewModel() {
     val lineLiveData =  MutableLiveData<ArrayList<String>>()
     val devices = MutableLiveData<ArrayList<String>>()
-
-    private fun getFile(){
-        val linesData = ArrayList<String>()
-        viewModelScope.launch(Dispatchers.IO){
-            var line: String?
-            val url = URL("smb://192.168.1.9/shared/roman.csv")
-            val connection = url.openConnection()
-            BufferedReader(InputStreamReader(connection.getInputStream())).use{ inp ->
-                while (inp.readText().also { line = it } != null) {
-                    linesData.add(line!!)
-                }
-            }
-            lineLiveData.value = linesData
-        }
-    }
-    init {
-        lineLiveData
-        getFile()
-    }
+//
+//    private fun getFile(){
+//        val linesData = ArrayList<String>()
+//        viewModelScope.launch(Dispatchers.IO){
+//            var line: String?
+//            val url = URL("smb://192.168.1.9/shared/roman.csv")
+//            val connection = url.openConnection()
+//            BufferedReader(InputStreamReader(connection.getInputStream())).use{ inp ->
+//                while (inp.readText().also { line = it } != null) {
+//                    linesData.add(line!!)
+//                }
+//            }
+//            lineLiveData.value = linesData
+//        }
+//    }
+//    init {
+//        lineLiveData
+//        getFile()
+//    }
 
 }

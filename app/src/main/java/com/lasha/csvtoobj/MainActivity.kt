@@ -2,8 +2,12 @@ package com.lasha.csvtoobj
 
 import android.Manifest
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.wifi.p2p.WifiP2pDevice
+import android.net.wifi.p2p.WifiP2pDeviceList
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Bundle
 import android.util.Log
@@ -24,9 +28,29 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setupOnClickListeners()
-        requestPeers()
+        channel = manager?.initialize(this, mainLooper, null)
+        channel?.also { channel ->
+            receiver = WiFiDirectBroadcastReceiver(manager!!, channel, this)
+        }
+        var i = 0
+        WifiP2pManager.PeerListListener { i = it.deviceList.size }
+        Log.i("Devices", i.toString())
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        receiver?.also { receiver ->
+            registerReceiver(receiver, intentFilter)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        receiver?.also { receiver ->
+            unregisterReceiver(receiver)
+        }
     }
 
     private fun setupOnClickListeners(){
@@ -66,11 +90,21 @@ class MainActivity : AppCompatActivity() {
             requestPermissionForReadExterntalStorage()
         }
     }
-    private fun requestPeers(){
-        WifiP2pManager.PeerListListener {
 
-            Log.i("AAA", it.deviceList.toString())
-        }
+    private val manager: WifiP2pManager? by lazy(LazyThreadSafetyMode.NONE) {
+        getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager?
     }
+
+    private var channel: WifiP2pManager.Channel? = null
+    private var receiver: BroadcastReceiver? = null
+
+    val intentFilter = IntentFilter().apply {
+        addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)
+        addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)
+        addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
+        addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
+    }
+
+
 
 }
