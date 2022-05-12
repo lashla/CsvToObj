@@ -3,6 +3,8 @@ package com.lasha.csvtoobj
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.net.wifi.p2p.WifiP2pDevice
+import android.net.wifi.p2p.WifiP2pManager
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -22,8 +24,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setupOnClickListeners()
+        requestPeers()
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
-        getClientList(true, 1000)
+
     }
 
     private fun setupOnClickListeners(){
@@ -63,49 +66,11 @@ class MainActivity : AppCompatActivity() {
             requestPermissionForReadExterntalStorage()
         }
     }
+    private fun requestPeers(){
+        WifiP2pManager.PeerListListener {
 
-    fun getClientList(
-        onlyReachables: Boolean,
-        reachableTimeout: Int
-    ): ArrayList<ClientScanResult?>? {
-        var buffReader: BufferedReader? = null
-        var result: ArrayList<ClientScanResult?>? = null
-        try {
-            result = ArrayList<ClientScanResult?>()
-            buffReader = BufferedReader(FileReader("/proc/net/arp"))
-            var line: String
-            var i = 0
-            while (buffReader.readLine().also { line = it } != null) {
-                val splitted = line.split(" +").toTypedArray()
-                if (splitted.size >= 4) {
-                    val mac = splitted[3]
-                    if (mac.matches(Regex("..:..:..:..:..:.."))) {
-                        val isReachable: Boolean =
-                            InetAddress.getByName(splitted[0]).isReachable(reachableTimeout)
-                        if (!onlyReachables || isReachable) {
-                            result.add(
-                                ClientScanResult(
-                                    splitted[0],
-                                    splitted[3],
-                                    splitted[5],
-                                    isReachable
-                                )
-                            )
-                            Log.i(this.javaClass.toString(), result.toString())
-                            i++
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(this.javaClass.toString(), e.message!!)
-        } finally {
-            try {
-                buffReader!!.close()
-            } catch (e: IOException) {
-                Log.e(this.javaClass.toString(), e.toString())
-            }
+            Log.i("AAA", it.deviceList.toString())
         }
-        return result
     }
+
 }
