@@ -10,7 +10,9 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.net.toUri
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.*
@@ -27,32 +29,32 @@ class MainActivity : AppCompatActivity() {
         setupOnClickListeners()
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
     }
-    public override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
-        super.onActivityResult(requestCode, resultCode, resultData)
-//        if (requestCode == PICK_CSV_FILE && resultCode == Activity.RESULT_OK) {
-//            resultData?.let { intent ->
-//                Log.i("Intent data", "data - ${intent.data!!}")
-//                val filepath = resultData.data!!.path
-//                showObjectTv.text = readCsv(intent.data!!,
-//                    Environment.getExternalStorageDirectory().toString() +
-//                            filepath!!.substringAfter("/external_files"))
-//                    .joinToString(separator = "\n")
-//            }
-//        }
-
-//        when (val result = tryHandleOpenDocumentResult(requestCode, resultCode, resultData)) {
-//            OpenFileResult.DifferentResult, OpenFileResult.OpenFileWasCancelled -> { }
-//            OpenFileResult.ErrorOpeningFile -> Log.e("File opening:", "error opening file")
-//            is OpenFileResult.FileWasOpened -> {
-//                Log.i("File", "Opened")
+//    public override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, resultData)
+////        if (requestCode == PICK_CSV_FILE && resultCode == Activity.RESULT_OK) {
+////            resultData?.let { intent ->
+////                Log.i("Intent data", "data - ${intent.data!!}")
+////                val filepath = resultData.data!!.path
+////                showObjectTv.text = readCsv(intent.data!!,
+////                    Environment.getExternalStorageDirectory().toString() +
+////                            filepath!!.substringAfter("/external_files"))
+////                    .joinToString(separator = "\n")
+////            }
+////        }
 //
-//                val file = File(Environment.getDownloadCacheDirectory().toString() + "/" + "roman.csv")
-//                val rows: List<List<String>> = csvReader().readAll(file)
-//                Log.i("File", "$file, rows - $rows, file size - ${file.length()}")
-//                showObjectTv.text = rows.toString()
-//            }
-//        }
-    }
+////        when (val result = tryHandleOpenDocumentResult(requestCode, resultCode, resultData)) {
+////            OpenFileResult.DifferentResult, OpenFileResult.OpenFileWasCancelled -> { }
+////            OpenFileResult.ErrorOpeningFile -> Log.e("File opening:", "error opening file")
+////            is OpenFileResult.FileWasOpened -> {
+////                Log.i("File", "Opened")
+////
+////                val file = File(Environment.getDownloadCacheDirectory().toString() + "/" + "roman.csv")
+////                val rows: List<List<String>> = csvReader().readAll(file)
+////                Log.i("File", "$file, rows - $rows, file size - ${file.length()}")
+////                showObjectTv.text = rows.toString()
+////            }
+////        }
+//    }
 
 
 
@@ -65,12 +67,12 @@ class MainActivity : AppCompatActivity() {
 
     private val READ_STORAGE_PERMISSION_REQUEST_CODE = 41
 
-    private fun checkPermissionForReadExtertalStorage(): Boolean {
+    private fun checkPermissionForReadExterntalStorage(): Boolean {
         val result: Int = this.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
         return result == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun requestPermissionForReadExtertalStorage() {
+    private fun requestPermissionForReadExterntalStorage() {
         try {
             ActivityCompat.requestPermissions(
                 (this as Activity?)!!, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
@@ -84,11 +86,13 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun openFile() {
-        if (checkPermissionForReadExtertalStorage()) {
-
+        if (checkPermissionForReadExterntalStorage()) {
+            viewModel.lineLiveData.observe(this){
+                Log.i("SMTH", it.toString())
+            }
         }
         else {
-            requestPermissionForReadExtertalStorage()
+            requestPermissionForReadExterntalStorage()
         }
     }
 
