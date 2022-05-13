@@ -16,18 +16,19 @@ class MainViewModel: ViewModel() {
     val lineLiveData =  MutableLiveData<ArrayList<String>>()
 
     private fun getFile(){
+
         val linesData = ArrayList<String>()
             viewModelScope.launch(Dispatchers.IO) {
                 val base: CIFSContext = SingletonContext.getInstance()
                 val authed1 = base.withCredentials(
                     NtlmPasswordAuthentication(
                         base, "Alexey",
-                        "Lashla", "12345678"
+                        "alexey", "xdfe29hg"
                     )
                 )
-
-                val dir = SmbFile("smb://192.168.1.9/shared/", authed1)
+                val dir = SmbFile("smb://192.168.1.9/shared/")
                 Log.i("DIR", dir.path.toString())
+                Log.i("Directory files", dir.listFiles()[0].name)
                 linesData.add(dir.listFiles().toString())
             }
 
