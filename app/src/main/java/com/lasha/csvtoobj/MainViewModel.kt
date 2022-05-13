@@ -1,39 +1,33 @@
 package com.lasha.csvtoobj
 
-import android.net.ConnectivityManager
-import android.net.wifi.WifiManager
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import jcifs.smb.NtlmPasswordAuthentication
+import jcifs.smb.SmbFile
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonDisposableHandle.parent
 import kotlinx.coroutines.launch
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.URL
 
 
 class MainViewModel: ViewModel() {
     val lineLiveData =  MutableLiveData<ArrayList<String>>()
-    val devices = MutableLiveData<ArrayList<String>>()
-//
-//    private fun getFile(){
-//        val linesData = ArrayList<String>()
-//        viewModelScope.launch(Dispatchers.IO){
-//            var line: String?
-//            val url = URL("smb://192.168.1.9/shared/roman.csv")
-//            val connection = url.openConnection()
-//            BufferedReader(InputStreamReader(connection.getInputStream())).use{ inp ->
-//                while (inp.readText().also { line = it } != null) {
-//                    linesData.add(line!!)
-//                }
-//            }
-//            lineLiveData.value = linesData
-//        }
-//    }
-//    init {
-//        lineLiveData
-//        getFile()
-//    }
+
+    private fun getFile(){
+        val linesData = ArrayList<String>()
+
+            val url = "smb://192.168.1.9/shared/"
+            val auth = NtlmPasswordAuthentication(null, "user", "password")
+            val dir = SmbFile(url, auth)
+                Log.i("File", dir.listFiles().toString())
+                linesData.add(dir.listFiles().toString())
+
+            lineLiveData.value = linesData
+
+    }
+    init {
+        lineLiveData
+        getFile()
+    }
 
 }
