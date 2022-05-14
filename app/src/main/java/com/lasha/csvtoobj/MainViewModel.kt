@@ -11,6 +11,8 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.doyaaaaaken.kotlincsv.dsl.context.ExcessFieldsRowBehaviour
+import com.github.doyaaaaaken.kotlincsv.dsl.context.InsufficientFieldsRowBehaviour
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import jcifs.CIFSContext
 import jcifs.context.SingletonContext
@@ -26,11 +28,16 @@ import java.net.URL
 
 class MainViewModel: ViewModel() {
     val lineLiveData =  MutableLiveData<List<List<String>>>()
-
+    private var linesData = ArrayList<List<String>>()
     private val CSV_HEADER = "date,name,number,some"
 
+    private fun takeFileContents(){
+        viewModelScope.launch {
+            getFile()
+        }
+    }
+
     private fun getFile(){
-        var linesData = ArrayList<List<String>>()
             viewModelScope.launch(Dispatchers.IO) {
                 val base: CIFSContext = SingletonContext.getInstance()
                 val dir = SmbFile("smb://192.168.1.9/shared/", base)
@@ -41,26 +48,27 @@ class MainViewModel: ViewModel() {
                 val localFile = File.createTempFile("fileName", ".csv")
 
                 val outputFileStream = FileOutputStream(localFile)
-
-                val smth = csvReader().readAll(SmbFileInputStream(dir.listFiles()[0]))
-                for (element in smth){
+                val reader = csvReader{
+                    charset = "UTF-8"
+                    excessFieldsRowBehaviour = ExcessFieldsRowBehaviour.IGNORE
+                    insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.IGNORE
+                }
+                val csvOutput = reader.readAll(inputSmbFileStream)
+                for (element in csvOutput){
                     linesData.add(element)
                 }
-                Log.i("Something", smth.toString())
+                viewModelScope.launch(Dispatchers.Main) {
+                    lineLiveData.value = linesData
+                }
                 inputSmbFileStream.close()
                 outputFileStream.close()
-
-                Log.i("Lines", "${localFile.length()} ${localFile.canonicalPath}")
-
             }
-        lineLiveData.value = linesData
-
-
     }
 
     init {
         lineLiveData
         getFile()
+        Log.i("LiveDataValue", lineLiveData.value.toString())
     }
 
 }
