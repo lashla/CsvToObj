@@ -1,6 +1,13 @@
 package com.lasha.csvtoobj
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.DocumentsContract
 import android.util.Log
+import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,30 +19,45 @@ import jcifs.smb.SmbFileInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileOutputStream
+import java.io.FileWriter
 import java.net.URL
-import java.nio.file.Paths
 
 
 class MainViewModel: ViewModel() {
     val lineLiveData =  MutableLiveData<List<List<String>>>()
 
-    private fun getFile(){
-        var linesData = emptyList<List<String>>()
-            viewModelScope.launch(Dispatchers.IO) {
-//                val base: CIFSContext = SingletonContext.getInstance()
+    private val CSV_HEADER = "date,name,number,some"
 
-                val dir = SmbFile("smb://192.168.1.9/shared/")
+    private fun getFile(){
+        var linesData = ArrayList<List<String>>()
+            viewModelScope.launch(Dispatchers.IO) {
+                val base: CIFSContext = SingletonContext.getInstance()
+                val dir = SmbFile("smb://192.168.1.9/shared/", base)
                 Log.i("DIR", dir.path.toString())
-                Log.i("Directory files", dir.listFiles()[0].name)
-                val url = URL("smb://192.168.1.9/shared/roman.csv")
-                val file: String? = url.file
-                linesData = csvReader().readAll(file!!)
-                Log.i("Lines", "${linesData[0]}")
+                Log.i("Directory files", dir.listFiles()[0].toString())
+                val inputSmbFileStream = SmbFileInputStream(dir.listFiles()[0])
+
+                val localFile = File.createTempFile("fileName", ".csv")
+
+                val outputFileStream = FileOutputStream(localFile)
+
+                val smth = csvReader().readAll(SmbFileInputStream(dir.listFiles()[0]))
+                for (element in smth){
+                    linesData.add(element)
+                }
+                Log.i("Something", smth.toString())
+                inputSmbFileStream.close()
+                outputFileStream.close()
+
+                Log.i("Lines", "${localFile.length()} ${localFile.canonicalPath}")
+
             }
         lineLiveData.value = linesData
 
 
     }
+
     init {
         lineLiveData
         getFile()
