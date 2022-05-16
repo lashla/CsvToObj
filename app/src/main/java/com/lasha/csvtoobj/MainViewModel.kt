@@ -1,19 +1,15 @@
 package com.lasha.csvtoobj
 
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.provider.DocumentsContract
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
-import androidx.core.app.ActivityCompat.startActivityForResult
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.doyaaaaaken.kotlincsv.dsl.context.ExcessFieldsRowBehaviour
 import com.github.doyaaaaaken.kotlincsv.dsl.context.InsufficientFieldsRowBehaviour
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
+import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
 import jcifs.CIFSContext
 import jcifs.context.SingletonContext
 import jcifs.smb.SmbFile
@@ -21,9 +17,6 @@ import jcifs.smb.SmbFileInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileOutputStream
-import java.io.FileWriter
-import java.net.URL
 
 
 class MainViewModel: ViewModel() {
@@ -45,23 +38,35 @@ class MainViewModel: ViewModel() {
                 Log.i("Directory files", dir.listFiles()[0].toString())
                 val inputSmbFileStream = SmbFileInputStream(dir.listFiles()[0])
 
-                val localFile = File.createTempFile("fileName", ".csv")
 
-                val outputFileStream = FileOutputStream(localFile)
+                val root = Environment.getExternalStorageDirectory()
+                val localDir = File(root.absolutePath + "/download")
+                localDir.mkdirs()
+                val localFile = File(localDir, "myData.csv")
+                Log.i("LocalFileDir", localDir.toString())
+//                val localFile = File("${MediaStore.MediaColumns.RELATIVE_PATH}/Documents/CsvData/", "fileName.csv")
+//                localFile.createNewFile()
+
                 val reader = csvReader{
-                    charset = "UTF-8"
+                    charset = "Windows-1251"
                     excessFieldsRowBehaviour = ExcessFieldsRowBehaviour.IGNORE
                     insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.IGNORE
                 }
+
                 val csvOutput = reader.readAll(inputSmbFileStream)
-                for (element in csvOutput){
+                val writer = csvWriter{
+                    charset = "Windows-1251"
+                }
+                writer.writeAll(csvOutput, localFile)
+                val csvLocalOutput = reader.readAll(localFile)
+                for (element in csvLocalOutput){
                     linesData.add(element)
                 }
+
                 viewModelScope.launch(Dispatchers.Main) {
                     lineLiveData.value = linesData
                 }
                 inputSmbFileStream.close()
-                outputFileStream.close()
             }
     }
 

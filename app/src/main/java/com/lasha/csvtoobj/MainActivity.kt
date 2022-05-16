@@ -14,6 +14,8 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
+import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
+import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.*
 import java.net.InetAddress
@@ -23,26 +25,27 @@ import kotlin.math.log
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: MainViewModel
-
+    private val newFileLines = ArrayList<List<String>>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        setupOnClickListeners()
+
+
+        initViewModel()
+    }
+
+    private fun initViewModel() {
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
-        initView()
-    }
 
-    private fun setupOnClickListeners(){
-        chooseScvFileBtn.setOnClickListener {
-
-        }
-    }
-
-    private fun initView() {
         viewModel.lineLiveData.observe(this){
-            Log.i("SMTH", it.toString())
-            showObjectTv.text = it.toString()
+            if (it.isNotEmpty()) {
+                Log.i("SMTH", it.toString())
+                showObjectTv.text = it.toString()
+
+            }
         }
     }
+
+
 
 }
