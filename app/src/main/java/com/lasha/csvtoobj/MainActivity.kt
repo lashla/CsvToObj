@@ -18,6 +18,8 @@ import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
 import kotlinx.android.synthetic.main.activity_main.*
@@ -29,23 +31,21 @@ import kotlin.math.log
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: MainViewModel
+    private val adapter = ScvRecyclerViewAdapter()
+    private val data = ArrayList<CsvData>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        initViewModel()
         enterRoot()
+        initViewModel()
+        initRecyclerView()
+
     }
 
     private fun enterRoot(){
-        filePathEt.setOnEditorActionListener { _, keyCode, event ->
-            if (((event?.action ?: -1) == KeyEvent.ACTION_DOWN)
-                || keyCode == EditorInfo.IME_ACTION_DONE
-            ) {
-                viewModel.takeFileContents("smb://"+ filePathEt.text.toString() + ".csv")
-                return@setOnEditorActionListener true
-            }
-            return@setOnEditorActionListener false
+        searchPath.setOnClickListener {
+            viewModel.takeFileContents("smb://"+ filePathEt.text.toString() + ".csv")
         }
     }
 
@@ -55,13 +55,22 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         viewModel.lineLiveData.observe(this){
             if (it.isNotEmpty()) {
-                Log.i("SMTH", it.toString())
-                showObjectTv.text = it.toString()
+                Log.i("viewmodel", "SMTH")
+                for (element in it)
+                    {
+                       data.add(CsvData(element[0],element[1],element[2],element[3],element[4],element[5],element[6]))
+                       adapter.updateDbInfo(data)
 
+                    }
+                }
             }
         }
+
+
+    private fun initRecyclerView(){
+        recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        recyclerView.itemAnimator = DefaultItemAnimator()
+        recyclerView.adapter = adapter
     }
-
-
 
 }

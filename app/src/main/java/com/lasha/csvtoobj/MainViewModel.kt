@@ -30,53 +30,50 @@ class MainViewModel: ViewModel() {
     }
 
     private fun getFile(storageLink: String){
-            viewModelScope.launch(Dispatchers.IO) {
-                val base: CIFSContext = SingletonContext.getInstance()
-                val reader = csvReader{
-                    charset = "Windows-1251"
-                    excessFieldsRowBehaviour = ExcessFieldsRowBehaviour.IGNORE
-                    insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.IGNORE
-                }
-                val writer = csvWriter{
-                    charset = "Windows-1251"
-                }
-
-
-                try {
-                    val filePath = SmbFile(storageLink, base)
-                    Log.i("DIR", filePath.path.toString())
-                    val inputSmbFileStream = SmbFileInputStream(filePath)
-                    val csvOutput = reader.readAll(inputSmbFileStream)
-                    val timeStampPattern = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-                    val newFileName = timeStampPattern.format(LocalDateTime.now())
-                    Log.i("New file path", filePath.url.toString() + newFileName +".csv")
-
-                    val newFile = SmbFile(filePath.parent.toString() + newFileName +".csv", base)
-
-//                    val root = Environment.getExternalStorageDirectory()
-//                    val localDir = File(root.absolutePath + "/download")
-////                    localDir.mkdirs()
-//                    val localFile = File(localDir, "myData.csv")
-//                    writer.writeAll(csvOutput, localFile)
-//
-//                    Log.i("LocalFileDir", localDir.toString())
-                    val outputSmbFileStream = SmbFileOutputStream(newFile)
-                    writer.writeAll(csvOutput, outputSmbFileStream)
-
-                    for (element in csvOutput){
-                        linesData.add(element)
-                    }
-                    inputSmbFileStream.close()
-                } catch (e: Exception){
-                    Log.e("File from LAN", e.message.toString())
-                }
-
-
-                viewModelScope.launch(Dispatchers.Main) {
-                    lineLiveData.value = linesData
-                }
-
+        viewModelScope.launch(Dispatchers.IO) {
+            val base: CIFSContext = SingletonContext.getInstance()
+            val reader = csvReader{
+                charset = "Windows-1251"
+                delimiter = ';'
+                excessFieldsRowBehaviour = ExcessFieldsRowBehaviour.IGNORE
+                insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.IGNORE
             }
+            val writer = csvWriter{
+                charset = "Windows-1251"
+            }
+            val filePath = SmbFile(storageLink, base)
+
+            try {
+
+                Log.i("DIR", filePath.path.toString())
+                val inputSmbFileStream = SmbFileInputStream(filePath)
+                val csvOutput = reader.readAll(inputSmbFileStream)
+                val timeStampPattern = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+                val newFileName = timeStampPattern.format(LocalDateTime.now())
+                Log.i("New file path", filePath.url.toString() + newFileName +".csv")
+
+                val newFile = SmbFile(filePath.parent.toString() + newFileName +".csv", base)
+
+                val outputSmbFileStream = SmbFileOutputStream(newFile)
+                writer.writeAll(csvOutput, outputSmbFileStream)
+
+                for (element in csvOutput){
+                    linesData.add(element)
+                }
+                inputSmbFileStream.close()
+            } catch (e: Exception){
+                Log.e("File from LAN", e.message.toString())
+            }
+
+
+            viewModelScope.launch(Dispatchers.Main) {
+                lineLiveData.value = linesData
+            }
+
+        }
+    }
+    private fun saveFile(){
+
     }
 
 }
