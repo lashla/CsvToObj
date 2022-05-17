@@ -11,6 +11,10 @@ import android.net.wifi.p2p.WifiP2pDeviceList
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
+import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
@@ -25,18 +29,30 @@ import kotlin.math.log
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: MainViewModel
-    private val newFileLines = ArrayList<List<String>>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-
         initViewModel()
+        enterRoot()
     }
+
+    private fun enterRoot(){
+        filePathEt.setOnEditorActionListener { _, keyCode, event ->
+            if (((event?.action ?: -1) == KeyEvent.ACTION_DOWN)
+                || keyCode == EditorInfo.IME_ACTION_DONE
+            ) {
+                viewModel.takeFileContents("smb://"+ filePathEt.text.toString() + ".csv")
+                return@setOnEditorActionListener true
+            }
+            return@setOnEditorActionListener false
+        }
+    }
+
+
 
     private fun initViewModel() {
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
-
         viewModel.lineLiveData.observe(this){
             if (it.isNotEmpty()) {
                 Log.i("SMTH", it.toString())

@@ -22,15 +22,14 @@ import java.time.format.DateTimeFormatter
 class MainViewModel: ViewModel() {
     val lineLiveData =  MutableLiveData<List<List<String>>>()
     private var linesData = ArrayList<List<String>>()
-    private val isFileCreated: Boolean = false
 
-    private fun takeFileContents(){
+    fun takeFileContents(storageLink: String){
         viewModelScope.launch {
-            getFile()
+            getFile(storageLink)
         }
     }
 
-    private fun getFile(){
+    private fun getFile(storageLink: String){
             viewModelScope.launch(Dispatchers.IO) {
                 val base: CIFSContext = SingletonContext.getInstance()
                 val reader = csvReader{
@@ -44,16 +43,15 @@ class MainViewModel: ViewModel() {
 
 
                 try {
-                    val dir = SmbFile("smb://192.168.1.9/shared/", base)
-                    Log.i("DIR", dir.path.toString())
-                    Log.i("Directory files", dir.listFiles()[0].toString())
-                    val inputSmbFileStream = SmbFileInputStream(dir.listFiles()[0])
+                    val filePath = SmbFile(storageLink, base)
+                    Log.i("DIR", filePath.path.toString())
+                    val inputSmbFileStream = SmbFileInputStream(filePath)
                     val csvOutput = reader.readAll(inputSmbFileStream)
                     val timeStampPattern = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
                     val newFileName = timeStampPattern.format(LocalDateTime.now())
-                    Log.i("New file path", dir.url.toString() + newFileName +".csv")
+                    Log.i("New file path", filePath.url.toString() + newFileName +".csv")
 
-                    val newFile = SmbFile(dir.url.toString() + newFileName +".csv", base)
+                    val newFile = SmbFile(filePath.parent.toString() + newFileName +".csv", base)
 
 //                    val root = Environment.getExternalStorageDirectory()
 //                    val localDir = File(root.absolutePath + "/download")
@@ -71,7 +69,6 @@ class MainViewModel: ViewModel() {
                     inputSmbFileStream.close()
                 } catch (e: Exception){
                     Log.e("File from LAN", e.message.toString())
-
                 }
 
 
@@ -80,12 +77,6 @@ class MainViewModel: ViewModel() {
                 }
 
             }
-    }
-
-    init {
-        lineLiveData
-        getFile()
-        Log.i("LiveDataValue", lineLiveData.value.toString())
     }
 
 }
