@@ -1,7 +1,5 @@
 package com.lasha.csvtoobj
 
-import android.os.Environment
-import android.provider.MediaStore
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -14,9 +12,11 @@ import jcifs.CIFSContext
 import jcifs.context.SingletonContext
 import jcifs.smb.SmbFile
 import jcifs.smb.SmbFileInputStream
+import jcifs.smb.SmbFileOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 class MainViewModel: ViewModel() {
@@ -49,38 +49,29 @@ class MainViewModel: ViewModel() {
                     Log.i("Directory files", dir.listFiles()[0].toString())
                     val inputSmbFileStream = SmbFileInputStream(dir.listFiles()[0])
                     val csvOutput = reader.readAll(inputSmbFileStream)
+                    val timeStampPattern = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+                    val newFileName = timeStampPattern.format(LocalDateTime.now())
+                    Log.i("New file path", dir.url.toString() + newFileName +".csv")
 
-                    val root = Environment.getExternalStorageDirectory()
-                    val localDir = File(root.absolutePath + "/download")
-                    localDir.mkdirs()
-                    val localFile = File(localDir, "myData.csv")
-                    writer.writeAll(csvOutput, localFile)
+                    val newFile = SmbFile(dir.url.toString() + newFileName +".csv", base)
 
-                    Log.i("LocalFileDir", localDir.toString())
+//                    val root = Environment.getExternalStorageDirectory()
+//                    val localDir = File(root.absolutePath + "/download")
+////                    localDir.mkdirs()
+//                    val localFile = File(localDir, "myData.csv")
+//                    writer.writeAll(csvOutput, localFile)
+//
+//                    Log.i("LocalFileDir", localDir.toString())
+                    val outputSmbFileStream = SmbFileOutputStream(newFile)
+                    writer.writeAll(csvOutput, outputSmbFileStream)
 
-                    val csvLocalOutput = reader.readAll(localFile)
-
-                    for (element in csvLocalOutput){
+                    for (element in csvOutput){
                         linesData.add(element)
                     }
                     inputSmbFileStream.close()
                 } catch (e: Exception){
                     Log.e("File from LAN", e.message.toString())
-                    try {
-                        val root = Environment.getExternalStorageDirectory()
-                        val localDir = File(root.absolutePath + "/download")
-                        val localFile = File(localDir, "myData.csv")
-                        reader.readAll(localFile)
 
-                        val csvLocalOutput = reader.readAll(localFile)
-
-                        for (element in csvLocalOutput){
-                            linesData.add(element)
-                        }
-                    }
-                    catch (e: Exception){
-                        Log.e("File from Local directory", e.message.toString())
-                    }
                 }
 
 
