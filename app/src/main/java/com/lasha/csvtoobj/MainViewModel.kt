@@ -22,7 +22,7 @@ import java.io.File
 class MainViewModel: ViewModel() {
     val lineLiveData =  MutableLiveData<List<List<String>>>()
     private var linesData = ArrayList<List<String>>()
-    private val CSV_HEADER = "date,name,number,some"
+    private val isFileCreated: Boolean = false
 
     private fun takeFileContents(){
         viewModelScope.launch {
@@ -33,40 +33,61 @@ class MainViewModel: ViewModel() {
     private fun getFile(){
             viewModelScope.launch(Dispatchers.IO) {
                 val base: CIFSContext = SingletonContext.getInstance()
-                val dir = SmbFile("smb://192.168.1.9/shared/", base)
-                Log.i("DIR", dir.path.toString())
-                Log.i("Directory files", dir.listFiles()[0].toString())
-                val inputSmbFileStream = SmbFileInputStream(dir.listFiles()[0])
-
-
-                val root = Environment.getExternalStorageDirectory()
-                val localDir = File(root.absolutePath + "/download")
-                localDir.mkdirs()
-                val localFile = File(localDir, "myData.csv")
-                Log.i("LocalFileDir", localDir.toString())
-//                val localFile = File("${MediaStore.MediaColumns.RELATIVE_PATH}/Documents/CsvData/", "fileName.csv")
-//                localFile.createNewFile()
-
                 val reader = csvReader{
                     charset = "Windows-1251"
                     excessFieldsRowBehaviour = ExcessFieldsRowBehaviour.IGNORE
                     insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.IGNORE
                 }
-
-                val csvOutput = reader.readAll(inputSmbFileStream)
                 val writer = csvWriter{
                     charset = "Windows-1251"
                 }
-                writer.writeAll(csvOutput, localFile)
-                val csvLocalOutput = reader.readAll(localFile)
-                for (element in csvLocalOutput){
-                    linesData.add(element)
+
+
+                try {
+                    val dir = SmbFile("smb://192.168.1.9/shared/", base)
+                    Log.i("DIR", dir.path.toString())
+                    Log.i("Directory files", dir.listFiles()[0].toString())
+                    val inputSmbFileStream = SmbFileInputStream(dir.listFiles()[0])
+                    val csvOutput = reader.readAll(inputSmbFileStream)
+
+                    val root = Environment.getExternalStorageDirectory()
+                    val localDir = File(root.absolutePath + "/download")
+                    localDir.mkdirs()
+                    val localFile = File(localDir, "myData.csv")
+                    writer.writeAll(csvOutput, localFile)
+
+                    Log.i("LocalFileDir", localDir.toString())
+
+                    val csvLocalOutput = reader.readAll(localFile)
+
+                    for (element in csvLocalOutput){
+                        linesData.add(element)
+                    }
+                    inputSmbFileStream.close()
+                } catch (e: Exception){
+                    Log.e("File from LAN", e.message.toString())
+                    try {
+                        val root = Environment.getExternalStorageDirectory()
+                        val localDir = File(root.absolutePath + "/download")
+                        val localFile = File(localDir, "myData.csv")
+                        reader.readAll(localFile)
+
+                        val csvLocalOutput = reader.readAll(localFile)
+
+                        for (element in csvLocalOutput){
+                            linesData.add(element)
+                        }
+                    }
+                    catch (e: Exception){
+                        Log.e("File from Local directory", e.message.toString())
+                    }
                 }
+
 
                 viewModelScope.launch(Dispatchers.Main) {
                     lineLiveData.value = linesData
                 }
-                inputSmbFileStream.close()
+
             }
     }
 
