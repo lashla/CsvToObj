@@ -41,7 +41,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.6.0'
     implementation("com.github.doyaaaaaken:kotlin-csv-jvm:1.3.0")
     def lifecycle_version = "2.4.1"
-    implementation 'eu.agno3.jcifs:jcifs-ng:2.1.7'
+    implementation 'com.hierynomus:smbj:0.11.5'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"

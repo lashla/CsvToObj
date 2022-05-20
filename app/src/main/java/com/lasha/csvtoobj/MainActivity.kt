@@ -61,8 +61,8 @@ class MainActivity : AppCompatActivity() {
                 for (element in it)
                     {
                         recyclerView.visibility = View.VISIBLE
-                       data.add(CsvData(element[0],element[1],element[2],element[3],element[4],element[5],element[6]))
-                       adapter.updateDbInfo(data)
+                        data.add(CsvData(element[0],element[1],element[2],element[3],element[4],element[5],element[6]))
+                        adapter.updateDbInfo(data)
                     }
                 }  else {
                     viewModel.exceptionData.observe(this){ exception ->
