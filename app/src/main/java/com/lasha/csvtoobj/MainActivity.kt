@@ -46,9 +46,7 @@ class MainActivity : AppCompatActivity() {
             val uri = resultData!!.data
             val pathParent = resultData.data!!.path!!.replace("${resultData.data!!.lastPathSegment}", "")
             Log.i("path parent", pathParent)
-//            val filePath = uri!!.path
-//            val uriToPath = contentResolver.openInputStream(uri)
-//            Log.i("Uri", uri)
+
             val inputStream: InputStream? = contentResolver.openInputStream(uri!!)
             val file = File.createTempFile("fileName", ".csv", this.cacheDir)
             val outputStream = FileOutputStream(file)
