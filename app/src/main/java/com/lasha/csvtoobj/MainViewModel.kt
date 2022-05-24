@@ -16,6 +16,8 @@ import jcifs.smb.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileInputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -26,37 +28,47 @@ class MainViewModel: ViewModel() {
     val lineLiveData =  MutableLiveData<List<List<String>>>()
     private var linesData = ArrayList<List<String>>()
     val exceptionData = MutableLiveData<String>()
-    private val user = null
-    private val password = null
-    private val domain = null
-
+    private val reader = csvReader{
+        charset = "Windows-1251"
+        delimiter = ';'
+        excessFieldsRowBehaviour = ExcessFieldsRowBehaviour.IGNORE
+        insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.IGNORE
+    }
+    private val writer = csvWriter{
+        charset = "Windows-1251"
+    }
 
     fun takeFileContents(storageLink: String){
         viewModelScope.launch {
-            getFile(storageLink)
+            getFileFromLink(storageLink)
         }
     }
 
-    private fun getFile(storageLink: String){
-        viewModelScope.launch(Dispatchers.IO) {
-
-
-
-//            val base: CIFSContext = SingletonContext.getInstance()
-
-                val reader = csvReader{
-                charset = "Windows-1251"
-                delimiter = ';'
-                excessFieldsRowBehaviour = ExcessFieldsRowBehaviour.IGNORE
-                insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.IGNORE
-            }
-            val writer = csvWriter{
-                charset = "Windows-1251"
-            }
-//            val filePath = SmbFile(storageLink, base.withAnonymousCredentials())
-//            val file = SmbFile(storageLink, base)
+    fun getFileFromStorage(file: File, path: String){
+        viewModelScope.launch(Dispatchers.IO){
             try {
-                val smb = connectSMB(user, password, domain, storageLink)
+                val fileInputStream = FileInputStream(file)
+                val csvOutput = reader.readAll(fileInputStream)
+                val timeStampPattern = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+                val newFileName = timeStampPattern.format(LocalDateTime.now())
+                for (element in csvOutput){
+                    linesData.add(element)
+                }
+                fileInputStream.close()
+            } catch (e: Exception){
+                Log.e("Read File From Storage", e.message.toString())
+            }
+
+        }
+        viewModelScope.launch(Dispatchers.Main){
+            lineLiveData.value = linesData
+        }
+    }
+
+    private fun getFileFromLink(storageLink: String){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val smb = connectSMB(storageLink)
                 Log.i("DIR", smb.path.toString())
 
                     val inputSmbFileStream = SmbFileInputStream(smb)
@@ -89,7 +101,7 @@ class MainViewModel: ViewModel() {
         }
     }
 
-    private suspend fun connectSMB(user: String?, password: String?, domain: String?, smbRoot: String): SmbFile {
+    private suspend fun connectSMB(smbRoot: String): SmbFile {
         val smb: SmbFile = withContext(Dispatchers.IO) {
                 val prop = Properties()
                 prop.setProperty("jcifs.smb.client.minVersion", "SMB202")
