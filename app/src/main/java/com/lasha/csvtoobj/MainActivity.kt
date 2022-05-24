@@ -10,14 +10,15 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.createBitmap
+import androidx.core.net.toFile
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
+import java.io.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 class MainActivity : AppCompatActivity() {
@@ -25,7 +26,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: MainViewModel
     private val adapter = ScvRecyclerViewAdapter()
     private val data = ArrayList<CsvData>()
-
+    private var uri: Uri? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -37,21 +38,20 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         super.onActivityResult(requestCode, resultCode, resultData)
-        if (resultCode == RESULT_OK){
-            val uri = resultData!!.data
+        if (resultCode == RESULT_OK && requestCode == 0){
+            uri = resultData!!.data
             val pathParent = resultData.data!!.path!!.replace("${resultData.data!!.lastPathSegment}", "")
             Log.i("path parent", pathParent)
-            readFile(uri,pathParent)
-
+            readFile(uri)
         }
     }
 
-    private fun readFile(uri: Uri?, pathParent: String){
+    private fun readFile(uri: Uri?){
         val inputStream: InputStream? = contentResolver.openInputStream(uri!!)
         val file = File.createTempFile("fileName", ".csv", this.cacheDir)
         val outputStream = FileOutputStream(file)
 
-        val buffer = file.readBytes()
+        val buffer = ByteArray(12040)
         var bytesRead: Int
 
         while (inputStream!!.read(buffer).also { bytesRead = it } != -1) {
@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
         inputStream.close()
         outputStream.close()
 
-        viewModel.getFileFromStorage(file, pathParent)
+        viewModel.getFileFromStorage(file)
     }
 
     private fun setupOnClickListeners(){
@@ -74,25 +74,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun chooseFileFromStorage(){
-        val requestCode = 0
+        val chooseFileCode = 0
 
             val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "*/*"
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 putExtra(DocumentsContract.EXTRA_INITIAL_URI, "Open csv")
             }
-            startActivityIfNeeded(intent, requestCode)
-    }
-    private fun saveFileToStorage(fileName: String){
-        val requestCode = 1
-
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
-            putExtra(Intent.EXTRA_TITLE, fileName)
-        }
-        startActivityIfNeeded(intent, requestCode)
+            startActivityForResult(intent, chooseFileCode)
     }
 
     private fun initViewModel() {
@@ -132,7 +122,7 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this,
                 arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 REQUEST_CODE_PERMISSIONS
-            );
+            )
         }
     }
 

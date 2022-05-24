@@ -44,13 +44,11 @@ class MainViewModel: ViewModel() {
         }
     }
 
-    fun getFileFromStorage(file: File, path: String){
+    fun getFileFromStorage(file: File){
         viewModelScope.launch(Dispatchers.IO){
             try {
                 val fileInputStream = FileInputStream(file)
                 val csvOutput = reader.readAll(fileInputStream)
-                val timeStampPattern = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-                val newFileName = timeStampPattern.format(LocalDateTime.now())
                 for (element in csvOutput){
                     linesData.add(element)
                 }
@@ -58,11 +56,11 @@ class MainViewModel: ViewModel() {
             } catch (e: Exception){
                 Log.e("Read File From Storage", e.message.toString())
             }
+            viewModelScope.launch(Dispatchers.Main){
+                lineLiveData.value = linesData
+            }
+        }
 
-        }
-        viewModelScope.launch(Dispatchers.Main){
-            lineLiveData.value = linesData
-        }
     }
 
     private fun getFileFromLink(storageLink: String){
