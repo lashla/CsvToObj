@@ -30,9 +30,9 @@ class MainViewModel: ViewModel() {
     val exceptionData = MutableLiveData<String>()
     private val reader = csvReader{
         charset = "Windows-1251"
-        delimiter = ';'
         excessFieldsRowBehaviour = ExcessFieldsRowBehaviour.IGNORE
         insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.IGNORE
+        escapeChar ='\\'
     }
     private val writer = csvWriter{
         charset = "Windows-1251"
@@ -51,9 +51,11 @@ class MainViewModel: ViewModel() {
                 val csvOutput = reader.readAll(fileInputStream)
                 for (element in csvOutput){
                     linesData.add(element)
+                    Log.i("LinesData", element.toString())
                 }
                 fileInputStream.close()
             } catch (e: Exception){
+                exceptionData.postValue(e.message)
                 Log.e("Read File From Storage", e.message.toString())
             }
             viewModelScope.launch(Dispatchers.Main){

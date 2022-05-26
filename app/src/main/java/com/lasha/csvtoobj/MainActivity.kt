@@ -14,11 +14,14 @@ import androidx.core.net.toFile
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.github.doyaaaaaken.kotlincsv.dsl.csvWriter
+import com.github.doyaaaaaken.kotlincsv.dsl.context.ExcessFieldsRowBehaviour
+import com.github.doyaaaaaken.kotlincsv.dsl.context.InsufficientFieldsRowBehaviour
+import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.*
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.nio.file.Files
+import kotlin.collections.ArrayList
+import kotlin.math.log
 
 
 class MainActivity : AppCompatActivity() {
@@ -27,6 +30,14 @@ class MainActivity : AppCompatActivity() {
     private val adapter = ScvRecyclerViewAdapter()
     private val data = ArrayList<CsvData>()
     private var uri: Uri? = null
+    private val reader = csvReader{
+        charset = "Windows-1251"
+        excessFieldsRowBehaviour = ExcessFieldsRowBehaviour.IGNORE
+        insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.IGNORE
+        escapeChar ='\\'
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -40,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, resultData)
         if (resultCode == RESULT_OK && requestCode == 0){
             uri = resultData!!.data
-            val pathParent = resultData.data!!.path!!.replace("${resultData.data!!.lastPathSegment}", "")
+            val pathParent = resultData.data!!.path!!
             Log.i("path parent", pathParent)
             readFile(uri)
         }
@@ -51,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         val file = File.createTempFile("fileName", ".csv", this.cacheDir)
         val outputStream = FileOutputStream(file)
 
-        val buffer = ByteArray(12040)
+        val buffer = ByteArray(123145324)
         var bytesRead: Int
 
         while (inputStream!!.read(buffer).also { bytesRead = it } != -1) {
@@ -79,8 +90,6 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "*/*"
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                putExtra(DocumentsContract.EXTRA_INITIAL_URI, "Open csv")
             }
             startActivityForResult(intent, chooseFileCode)
     }
@@ -90,22 +99,27 @@ class MainActivity : AppCompatActivity() {
         viewModel.lineLiveData.observe(this){
             if (it.isNotEmpty()) {
                 Log.i("viewmodel", "SMTH")
-                for (element in it)
+                try {
+                    for (element in it)
                     {
                         recyclerView.visibility = View.VISIBLE
                         data.add(CsvData(element[0],element[1],element[2],element[3],element[4],element[5],element[6]))
                         adapter.updateDbInfo(data)
                     }
-                }  else {
-                    viewModel.exceptionData.observe(this){ exception ->
-                        if (exception.isNotEmpty()){
-                            recyclerView.visibility = View.INVISIBLE
+                } catch (e: Exception){
+                    Log.e("Trouble reading livaData", e.message.toString())
+                }
 
-                            exceptionTV.text = exception
-                            exceptionTV.visibility = View.VISIBLE
-                        }
+            }  else {
+                viewModel.exceptionData.observe(this){ exception ->
+                    if (exception.isNotEmpty()){
+                        recyclerView.visibility = View.INVISIBLE
 
+                        exceptionTV.text = exception
+                        exceptionTV.visibility = View.VISIBLE
                     }
+
+                }
             }
             }
         }
