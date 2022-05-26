@@ -42,17 +42,18 @@ class MainViewModel: ViewModel() {
         viewModelScope.launch {
             getFileFromLink(storageLink)
         }
+
     }
 
     fun getFileFromStorage(file: File){
         viewModelScope.launch(Dispatchers.IO){
             try {
                 val fileInputStream = FileInputStream(file)
-                val csvOutput = reader.readAll(fileInputStream)
-                for (element in csvOutput){
-                    linesData.add(element)
-                    Log.i("LinesData", element.toString())
+                reader.readAll(fileInputStream).forEach {
+                    linesData.add(it)
+                    Log.i("LinesData", it.toString())
                 }
+
                 fileInputStream.close()
             } catch (e: Exception){
                 exceptionData.postValue(e.message)
@@ -72,7 +73,10 @@ class MainViewModel: ViewModel() {
                 Log.i("DIR", smb.path.toString())
 
                     val inputSmbFileStream = SmbFileInputStream(smb)
-                    val csvOutput = reader.readAll(inputSmbFileStream)
+                    reader.readAll(inputSmbFileStream).forEach {
+                        linesData.add(it)
+                    }
+//                val csvOutput = reader.readAll(inputSmbFileStream)
                     val timeStampPattern = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
                     val newFileName = timeStampPattern.format(LocalDateTime.now())
                     Log.i("New file path", smb.url.toString() + newFileName +".csv")
@@ -80,11 +84,11 @@ class MainViewModel: ViewModel() {
                     val newFile = SmbFile(smb.parent.toString() + newFileName +".csv")
 
                     val outputSmbFileStream = SmbFileOutputStream(newFile)
-                    writer.writeAll(csvOutput, outputSmbFileStream)
+                    writer.writeAll(linesData, outputSmbFileStream)
 
-                    for (element in csvOutput){
-                        linesData.add(element)
-                    }
+//                    for (element in csvOutput){
+//                        linesData.add(element)
+//                    }
                     inputSmbFileStream.close()
                     outputSmbFileStream.close()
 

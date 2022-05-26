@@ -30,13 +30,6 @@ class MainActivity : AppCompatActivity() {
     private val adapter = ScvRecyclerViewAdapter()
     private val data = ArrayList<CsvData>()
     private var uri: Uri? = null
-    private val reader = csvReader{
-        charset = "Windows-1251"
-        excessFieldsRowBehaviour = ExcessFieldsRowBehaviour.IGNORE
-        insufficientFieldsRowBehaviour = InsufficientFieldsRowBehaviour.IGNORE
-        escapeChar ='\\'
-    }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +55,7 @@ class MainActivity : AppCompatActivity() {
         val file = File.createTempFile("fileName", ".csv", this.cacheDir)
         val outputStream = FileOutputStream(file)
 
-        val buffer = ByteArray(123145324)
+        val buffer = ByteArray(2048)
         var bytesRead: Int
 
         while (inputStream!!.read(buffer).also { bytesRead = it } != -1) {
