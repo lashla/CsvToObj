@@ -65,4 +65,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:visibility="invisible"
+        android:indeterminate="true"
+        android:progress="0"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:flow_verticalStyle="packed"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/filePathEt" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

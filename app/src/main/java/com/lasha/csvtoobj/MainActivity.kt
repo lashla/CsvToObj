@@ -63,8 +63,10 @@ class MainActivity : AppCompatActivity() {
         }
         inputStream.close()
         outputStream.close()
-
+        exceptionTV.visibility = View.VISIBLE
+        exceptionTV.text = "Got file, fetching data"
         viewModel.getFileFromStorage(file)
+        progressBar.visibility = View.VISIBLE
     }
 
     private fun setupOnClickListeners(){
@@ -91,25 +93,41 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         viewModel.lineLiveData.observe(this){
             if (it.isNotEmpty()) {
-                Log.i("viewmodel", "SMTH")
                 try {
+                    exceptionTV.text = "Observing file data"
                     for (element in it)
                     {
                         recyclerView.visibility = View.VISIBLE
-                        data.add(CsvData(element[0],element[1],element[2],element[3],element[4],element[5],element[6]))
-                        adapter.updateDbInfo(data)
+                                data.add(
+                                    CsvData(
+                                        element[0],
+                                        element[1],
+                                        element[2],
+                                        element[3],
+                                        element[4],
+                                        element[5],
+                                        element[6]
+                                    )
+                                )
+                                adapter.updateDbInfo(data)
+
+                        exceptionTV.visibility = View.INVISIBLE
+                        progressBar.visibility = View.INVISIBLE
                     }
                 } catch (e: Exception){
-                    Log.e("Trouble reading livaData", e.message.toString())
+                    Log.e("Trouble reading livaDat", e.message.toString())
                 }
 
             }  else {
                 viewModel.exceptionData.observe(this){ exception ->
                     if (exception.isNotEmpty()){
                         recyclerView.visibility = View.INVISIBLE
-
+                        progressBar.visibility = View.INVISIBLE
                         exceptionTV.text = exception
                         exceptionTV.visibility = View.VISIBLE
+                    } else {
+                        exceptionTV.visibility = View.VISIBLE
+                        exceptionTV.text = "Data is empty"
                     }
 
                 }
